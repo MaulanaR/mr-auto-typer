@@ -3,13 +3,10 @@ module github.com/you/go-auto-typer-wails
 go 1.23.3
 
 require (
-	github.com/go-vgo/robotgo v0.110.0
+	github.com/go-vgo/robotgo v0.110.1
 	github.com/robotn/gohook v0.42.2
 	github.com/wailsapp/wails/v2 v2.9.1
 )
-
-// Fix for macOS 15 compatibility
-replace github.com/kbinani/screenshot => github.com/kbinani/screenshot v0.0.0-20240101000000-000000000000
 
 require (
 	github.com/bep/debounce v1.2.1 // indirect

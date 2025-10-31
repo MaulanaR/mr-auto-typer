@@ -10,8 +10,8 @@ github.com/gen2brain/shm v0.0.0-20230802011745-f2460f5984f7/go.mod h1:uF6rMu/1nv
 github.com/go-ole/go-ole v1.2.6/go.mod h1:pprOEPIfldk/42T2oK7lQ4v4JSDwmV0As9GaiUsvbm0=
 github.com/go-ole/go-ole v1.3.0 h1:Dt6ye7+vXGIKZ7Xtk4s6/xVdGDQynvom7xCFEdWr6uE=
 github.com/go-ole/go-ole v1.3.0/go.mod h1:5LS6F96DhAwUc7C+1HLexzMXY1xGRSryjyPPKW6zv78=
-github.com/go-vgo/robotgo v0.110.0 h1:655fmWO4yD5dn/y70Z50wdxnqg2LvmRD+MZ1iOXuGI0=
-github.com/go-vgo/robotgo v0.110.0/go.mod h1:DdJUdi6mEU8ttHMbow6hKD1TjgsfgJC/H+4dusok8Uw=
+github.com/go-vgo/robotgo v0.110.1 h1:2etpOzsBBt9KJOxDBFBVYzE4/U7gRrsnB9dxuujRMTw=
+github.com/go-vgo/robotgo v0.110.1/go.mod h1:DdJUdi6mEU8ttHMbow6hKD1TjgsfgJC/H+4dusok8Uw=
 github.com/godbus/dbus/v5 v5.1.0 h1:4KLkAxT3aOY8Li4FRJe/KvhoNFFxo0m6fNuFUO8QJUk=
 github.com/godbus/dbus/v5 v5.1.0/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/google/go-cmp v0.5.6/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=

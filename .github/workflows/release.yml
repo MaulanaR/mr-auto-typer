@@ -70,14 +70,6 @@ jobs:
         if: matrix.platform == 'darwin'
         run: |
           brew install npm create-dmg
-          
-      # Fix macOS screenshot library compatibility
-      - name: Fix macOS screenshot library
-        if: matrix.platform == 'darwin'
-        run: |
-          # Update go.mod to use compatible screenshot version
-          go mod edit -replace github.com/kbinani/screenshot=github.com/kbinani/screenshot@v0.0.0-20240101000000-000000000000
-          go mod tidy
 
       - name: Cache Go build
         uses: actions/cache@v4
