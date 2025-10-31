@@ -89,7 +89,7 @@ jobs:
       - name: Build Wails
         run: |
           echo "Building for ${{ matrix.platform }}"
-          wails build -clean -platform ${{ matrix.platform }} -arch ${{ matrix.arch }} -ldflags "-X main.version=dev-${GITHUB_SHA::7}"
+          wails build -clean -platform ${{ matrix.platform }} -ldflags "-X main.version=dev-${GITHUB_SHA::7}"
 
       - name: Package Linux artifact
         if: matrix.platform == 'linux'
