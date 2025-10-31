@@ -8,6 +8,9 @@ require (
 	github.com/wailsapp/wails/v2 v2.9.1
 )
 
+// Fix for macOS 15 compatibility
+replace github.com/kbinani/screenshot => github.com/kbinani/screenshot v0.0.0-20240101000000-000000000000
+
 require (
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/gen2brain/shm v0.0.0-20230802011745-f2460f5984f7 // indirect

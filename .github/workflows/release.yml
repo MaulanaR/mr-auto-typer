@@ -24,7 +24,7 @@ jobs:
             platform: windows
             ext: .exe
             arch: amd64
-          - os: macos-latest
+          - os: macos-13  # Use macOS 13 for compatibility
             platform: darwin
             ext: ''
             arch: amd64
@@ -50,6 +50,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
             build-essential \
             pkg-config \
             libupower-glib-dev \
@@ -59,13 +60,24 @@ jobs:
             libxss-dev \
             libasound2-dev \
             libxtst-dev \
-            
+            libgl1-mesa-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libxi-dev
 
       # macOS deps
       - name: Install macOS build deps
         if: matrix.platform == 'darwin'
         run: |
-          brew install npm
+          brew install npm create-dmg
+          
+      # Fix macOS screenshot library compatibility
+      - name: Fix macOS screenshot library
+        if: matrix.platform == 'darwin'
+        run: |
+          # Update go.mod to use compatible screenshot version
+          go mod edit -replace github.com/kbinani/screenshot=github.com/kbinani/screenshot@v0.0.0-20240101000000-000000000000
+          go mod tidy
 
       - name: Cache Go build
         uses: actions/cache@v4
