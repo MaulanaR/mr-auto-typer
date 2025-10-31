@@ -16,17 +16,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            platform: linux
-            ext: ''
-            arch: amd64
           - os: windows-latest
             platform: windows
             ext: .exe
-            arch: amd64
-          - os: macos-13  # Use macOS 13 for compatibility
-            platform: darwin
-            ext: ''
             arch: amd64
 
     steps:
@@ -43,31 +35,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Linux build deps
-        if: matrix.platform == 'linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-dev \
-            libwebkit2gtk-4.1-dev \
-            build-essential \
-            pkg-config \
-            libupower-glib-dev \
-            libnss3-dev \
-            libdbus-1-dev \
-            libxrandr-dev \
-            libxss-dev \
-            libasound2-dev \
-            libxtst-dev \
-            libgl1-mesa-dev \
-            libxinerama-dev \
-            libxcursor-dev \
-            libxi-dev
-
-      - name: Install macOS build deps
-        if: matrix.platform == 'darwin'
-        run: |
-          brew install npm create-dmg
 
       - name: Cache Go build
         uses: actions/cache@v4
