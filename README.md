@@ -29,8 +29,75 @@ Quick usage
 4. Save the preset
 5. Press Start to run the auto-typing sequence.
 
-Donations
+## ✔️ Donations
 If this project helped you and you'd like to say thanks, please consider sponsoring the project.
 
-License
-This is not open source project !
+## 📦 Download
+
+### Release Stabil
+Download stable version from [Releases](https://github.com/MaulanaR/mr-auto-typer/releases) page.
+
+## 📁 Project Structure
+
+```
+mr-auto-typer/
+├── app.go              # Main application logic
+├── main.go            # Wails entry point
+├── go.mod             # Go modules
+├── wails.json         # Wails configuration
+├── frontend/          # Frontend assets
+│   ├── index.html     # Main HTML
+│   ├── mrlabs.ico     # App icon
+│   └── wailsjs/      # Generated Wails bindings
+├── .github/
+│   └── workflows/    # CI/CD workflows
+├── build/            # Build output
+└── dist/             # Packaged artifacts
+```
+
+## 🎨 UI Features
+
+### Responsive Breakpoints
+- **Desktop**: > 768px (3-column layout)
+- **Tablet**: ≤ 768px (1-column layout)
+- **Mobile**: ≤ 480px (vertical toolbar)
+
+### Keyboard Shortcuts
+- `Ctrl+Alt+Enter`: Start typing
+- `Ctrl+Alt+S`: Stop typing
+
+## 🔒 Security
+- **Gosec**: Static security analysis
+- **Dependency Scanning**: Automated vulnerability checks
+- **CodeQL**: Advanced security analysis
+- **SARIF Reports**: Security findings in GitHub
+
+## 📝 Tokens
+
+Special tokens can be used in text:
+- `{backspace}`: Backspace key
+- `{delete}`: Delete key  
+- `{enter}`: Enter key
+- `{tab}`: Tab key
+
+## 🤝 Contributing
+
+1. Fork repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push ke branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
+
+## 📄 License
+
+Not an opensource project !
+
+## 🙏 Credits
+
+- [Wails v2](https://wails.io/) - Cross-platform app framework
+- [RobotGo](https://github.com/go-vgo/robotgo) - GUI automation
+- [GoHook](https://github.com/robotn/gohook) - Global hotkeys
+
+---
+
+**MrLabs** - Building useful tools for developers 🚀

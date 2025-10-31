@@ -1,16 +1,16 @@
-name: Build & Release Wails
+name: Development Build
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [ main, develop ]
+  workflow_dispatch:
 
 env:
   APP_NAME: mr-auto-typer
 
 jobs:
-  build:
-    name: Build (${{ matrix.os }})
+  build-dev:
+    name: Build Dev (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -43,7 +43,6 @@ jobs:
         with:
           node-version: '20'
 
-      # Linux deps untuk Wails (GTK/WebKit)
       - name: Install Linux build deps
         if: matrix.platform == 'linux'
         run: |
@@ -62,7 +61,6 @@ jobs:
             libxtst-dev \
             libgconf-2-4
 
-      # macOS deps
       - name: Install macOS build deps
         if: matrix.platform == 'darwin'
         run: |
@@ -81,7 +79,6 @@ jobs:
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
-      # Build frontend jika ada package.json
       - name: Build frontend
         if: hashFiles('frontend/package.json') != ''
         working-directory: frontend
@@ -89,45 +86,42 @@ jobs:
           npm ci
           npm run build 2>/dev/null || echo "No build script found, skipping frontend build"
 
-      # Build Wails application
       - name: Build Wails
         run: |
           echo "Building for ${{ matrix.platform }}"
-          wails build -clean -platform ${{ matrix.platform }} -arch ${{ matrix.arch }} -ldflags "-X main.version=${GITHUB_REF#v}"
+          wails build -clean -platform ${{ matrix.platform }} -arch ${{ matrix.arch }} -ldflags "-X main.version=dev-${GITHUB_SHA::7}"
 
-      # Package artifacts untuk Linux
       - name: Package Linux artifact
         if: matrix.platform == 'linux'
         run: |
           mkdir -p dist
-          TAG="${GITHUB_REF#v}"
+          COMMIT="${GITHUB_SHA::7}"
           BIN_NAME="${APP_NAME}${{ matrix.ext }}"
           
           if [ -f "build/bin/${BIN_NAME}" ]; then
             cp "build/bin/${BIN_NAME}" "dist/"
-            tar -czf "dist/${APP_NAME}-${TAG}-linux-${{ matrix.arch }}.tar.gz" -C "dist" "${BIN_NAME}"
+            tar -czf "dist/${APP_NAME}-dev-${COMMIT}-linux-${{ matrix.arch }}.tar.gz" -C "dist" "${BIN_NAME}"
             rm "dist/${BIN_NAME}"
           elif [ -d "build/${APP_NAME}.app" ]; then
-            tar -czf "dist/${APP_NAME}-${TAG}-darwin-${{ matrix.arch }}.tar.gz" -C "build" "${APP_NAME}.app"
+            tar -czf "dist/${APP_NAME}-dev-${COMMIT}-darwin-${{ matrix.arch }}.tar.gz" -C "build" "${APP_NAME}.app"
           else
-            echo "Binary not found, listing build directory:"
+            echo "Binary not found"
             find build -type f -name "*" || true
             exit 1
           fi
           ls -lah dist/
 
-      # Package artifacts untuk Windows
       - name: Package Windows artifact
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          $TAG = "${env:GITHUB_REF_NAME}" -replace "v", ""
+          $COMMIT = "${env:GITHUB_SHA}".Substring(0, 7)
           $BIN_NAME = "${env:APP_NAME}${{ matrix.ext }}"
           $exePath = "build/bin/${BIN_NAME}"
           
           if (Test-Path $exePath) {
-            Compress-Archive -Path $exePath -DestinationPath "dist/${env:APP_NAME}-${TAG}-windows-${{ matrix.arch }}.zip"
+            Compress-Archive -Path $exePath -DestinationPath "dist/${env:APP_NAME}-dev-${COMMIT}-windows-${{ matrix.arch }}.zip"
           } else {
             Write-Host "Binary not found at $exePath"
             Get-ChildItem -Path build/bin -Recurse -Force | Out-String
@@ -135,22 +129,14 @@ jobs:
           }
           Get-ChildItem dist
 
-      # Package artifacts untuk macOS
       - name: Package macOS artifact
         if: matrix.platform == 'darwin'
         run: |
           mkdir -p dist
-          TAG="${GITHUB_REF#v}"
+          COMMIT="${GITHUB_SHA::7}"
           
           if [ -d "build/${APP_NAME}.app" ]; then
-            # Create DMG for macOS
-            brew install create-dmg || true
-            if command -v create-dmg &> /dev/null; then
-              create-dmg "build/${APP_NAME}.app" "dist/${APP_NAME}-${TAG}-darwin-${{ matrix.arch }}.dmg" || \
-                tar -czf "dist/${APP_NAME}-${TAG}-darwin-${{ matrix.arch }}.tar.gz" -C "build" "${APP_NAME}.app"
-            else
-              tar -czf "dist/${APP_NAME}-${TAG}-darwin-${{ matrix.arch }}.tar.gz" -C "build" "${APP_NAME}.app"
-            fi
+            tar -czf "dist/${APP_NAME}-dev-${COMMIT}-darwin-${{ matrix.arch }}.tar.gz" -C "build" "${APP_NAME}.app"
           else
             echo "macOS app bundle not found"
             find build -type f -name "*" || true
@@ -161,73 +147,59 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}-${{ matrix.arch }}-artifacts
+          name: dev-${{ matrix.platform }}-${{ matrix.arch }}
           path: dist/*
-          retention-days: 30
+          retention-days: 7
 
-  release:
-    name: Create GitHub Release
+  create-release-info:
+    name: Create Release Info
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-dev
+    if: github.ref == 'refs/heads/main'
     steps:
-      - name: Download all build artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: release_dist
           merge-multiple: true
 
-      - name: List files
+      - name: Create Release Info
         run: |
-          echo "Release files:"
-          find release_dist -type f -name "*" | sort
-
-      - name: Create Release Notes
-        id: release_notes
-        run: |
-          TAG="${GITHUB_REF_NAME}"
-          echo "## 🚀 Release ${TAG}" > release_notes.md
-          echo "" >> release_notes.md
-          echo "### 📦 Downloads" >> release_notes.md
-          echo "" >> release_notes.md
+          echo "# 🚀 Development Build" > release_info.md
+          echo "" >> release_info.md
+          echo "Commit: \`${GITHUB_SHA}\`" >> release_info.md
+          echo "Branch: \`${GITHUB_REF_NAME}\`" >> release_info.md
+          echo "" >> release_info.md
+          echo "## 📦 Development Downloads" >> release_info.md
+          echo "" >> release_info.md
           
-          # Add download links for each platform
           for file in release_dist/*; do
             if [ -f "$file" ]; then
               filename=$(basename "$file")
-              if [[ $filename == *"linux"* ]]; then
-                echo "- **Linux**: \`${filename}\`" >> release_notes.md
-              elif [[ $filename == *"windows"* ]]; then
-                echo "- **Windows**: \`${filename}\`" >> release_notes.md
-              elif [[ $filename == *"darwin"* ]]; then
-                echo "- **macOS**: \`${filename}\`" >> release_notes.md
-              fi
+              size=$(du -h "$file" | cut -f1)
+              echo "- \`${filename}\` (${size})" >> release_info.md
             fi
           done
           
-          echo "" >> release_notes.md
-          echo "### 🔧 Installation" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "- **Windows**: Extract the ZIP file and run `.exe`" >> release_notes.md
-          echo "- **Linux**: Extract the TAR.GZ file and run the binary" >> release_notes.md
-          echo "- **macOS**: Open the DMG file and drag to Applications, or extract TAR.GZ" >> release_notes.md
+          echo "" >> release_info.md
+          echo "⚠️ **Note**: These are development builds and may contain bugs." >> release_info.md
+          echo "" >> release_info.md
+          echo "### 🔧 Installation" >> release_info.md
+          echo "" >> release_info.md
+          echo "- **Windows**: Extract ZIP and run `.exe`" >> release_info.md
+          echo "- **Linux**: Extract TAR.GZ and run binary" >> release_info.md
+          echo "- **macOS**: Extract TAR.GZ and run `.app`" >> release_info.md
           
-          cat release_notes.md
-          
-          # Set output for GitHub Release
-          {
-            echo 'notes<<EOF'
-            cat release_notes.md
-            echo EOF
-          } >> "$GITHUB_OUTPUT"
+          cat release_info.md
 
-      - name: Create/Update Release
-        uses: softprops/action-gh-release@v2
+      - name: Update Release Info File
+        run: |
+          mkdir -p dist
+          cp release_info.md dist/DEV_RELEASE_INFO.md
+
+      - name: Upload Release Info
+        uses: actions/upload-artifact@v4
         with:
-          body: ${{ steps.release_notes.outputs.notes }}
-          files: |
-            release_dist/*
-          draft: false
-          prerelease: false
-          generate_release_notes: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: release-info
+          path: dist/DEV_RELEASE_INFO.md
+          retention-days: 7
