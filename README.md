@@ -1,8 +1,9 @@
-// ...existing code...
 # mr-auto-typer
 Mrlabs - Auto Typer
+<img width="500" height="500" alt="_9b0eaa11-7724-4e77-9fcf-f42e345e9448-removebg-preview" src="https://github.com/user-attachments/assets/1fe34281-c830-40d1-9b1e-e200aaea1be7" />
 
-mr-auto-typer is an Auto Typer application that simplifies automatic typing. Enter the text you want duplicated and the app will reproduce the input automatically according to your configuration.
+The Auto Typer Software Utility can be used to type Text on Keyboard with a configurable Hot Key or Shortcut Key.
+Auto Typer to Type Text easily and quickly without manual text typing.
 
 Key features
 - Free text input: duplicates whatever you type
