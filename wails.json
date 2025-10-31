@@ -1,0 +1,19 @@
+{
+  "name": "Mr Auto Typer",
+  "outputfilename": "mr-auto-typer",
+  "assetsdir": "frontend",
+  "icon": "frontend/mrlabs.ico",
+  "build": {
+    "frontend:install": "",
+    "frontend:build": "",
+    "frontend:dev:watcher": "",
+    "frontend:dev:server": ""
+  },
+  "wailsjsdir": "frontend/wailsjs",
+  "windows": {
+    "webview2": {
+      "browserPath": ""
+    },
+    "icon": "frontend/mrlabs.ico"
+  }
+}

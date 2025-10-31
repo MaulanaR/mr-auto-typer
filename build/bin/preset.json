@@ -1,0 +1,8 @@
+{
+  "text": "asdasdasd",
+  "min_ms": 20,
+  "max_ms": 120,
+  "loops": 0,
+  "loop_delay_ms": 800,
+  "loop_jitter_ms": 0
+}
