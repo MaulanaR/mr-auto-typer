@@ -55,3 +55,34 @@ jobs:
         with:
           name: wails-binary-${{ matrix.os }}
           path: build/bin/*
+
+  # Job baru untuk menangani rilis
+  release:
+    needs: build # Pastikan job build selesai dulu
+    runs-on: ubuntu-latest
+    # Hanya jalankan job ini jika eventnya adalah rilis yang dipublikasikan
+    if: github.event_name == 'release' && github.event.action == 'published'
+
+    steps:
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-app-windows-latest
+          path: windows-build/
+
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: built-app-ubuntu-22.04
+          path: linux-build/
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          # Arahkan action untuk melampirkan semua file dari folder hasil download
+          files: |
+            windows-build/*
+            linux-build/*
+        env:
+          # GitHub automatically provides this token for release actions
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
