@@ -4,18 +4,19 @@ on: [push, pull_request]
 jobs:
   build:
     strategy:
-      fail-fast: false
+      fail-fast: false # Prevents one platform's failure from stopping others
       matrix:
         os: [ubuntu-latest, windows-latest]
         platform: [linux/amd64, windows/amd64]
+        # Exclude the invalid combination: Linux OS building a Windows binary
         exclude:
           - os: ubuntu-latest
             platform: windows/amd64
+          # Exclude the invalid combination: Windows OS building a Linux binary
           - os: windows-latest
             platform: linux/amd64
 
     runs-on: ${{ matrix.os }}
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -31,7 +32,7 @@ jobs:
           node-version: '20'
 
       - name: Install Wails CLI
-        run: go install github.com
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Install Linux Dependencies
         if: runner.os == 'Linux'
