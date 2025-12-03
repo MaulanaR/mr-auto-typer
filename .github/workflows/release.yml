@@ -1,23 +1,55 @@
-name: Wails build
-on: [push, pull_request]
+name: Wails Build Windows & Linux
+
+on:
+  push:
+    tags:
+      - '*' # This workflow runs whenever a new git tag is pushed
+
 jobs:
   build:
     strategy:
-      fail-fast: false
+      fail-fast: false # Prevents one platform's failure from stopping others
       matrix:
         include:
-          - name: wailsTest
-            platform: linux/amd64
-            os: ubuntu-latest
-          - name: wailsTest
-            platform: windows/amd64
-            os: windows-latest
-          - name: wailsTest
-            platform: darwin/universal
-            os: macos-latest
-    runs-on: ${{ matrix.os }}
+          - name: 'Windows Build'
+            platform: 'windows/amd64'
+            os: 'windows-latest'
+          - name: 'Linux Build'
+            platform: 'linux/amd64'
+            os: 'ubuntu-latest'
+
+    runs-on: ${{ matrix.build.os }}
+
     steps:
-      - uses: Snider/build@v2.2
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          build-name: ${{ matrix.name }}
-          build-platform: ${{ matrix.platform }}
+          go-version: '1.22' # Use your desired Go version
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Use your desired Node.js version
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install Linux Dependencies (if running on Linux)
+        if: startsWith(runner.os, 'Linux')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev
+          
+      - name: Build Wails App
+        run: wails build -platform ${{ matrix.build.platform }}
+        # Note: For Windows builds on Windows runner, -webview2 embed is often useful
+        # run: wails build -platform ${{ matrix.build.platform }} -webview2 embed
+      
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wails-binary-${{ matrix.build.os }}
+          path: build/bin/*
