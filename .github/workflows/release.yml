@@ -39,7 +39,7 @@ jobs:
         run: |
           sudo apt-get update
           # BARU: Menambahkan libx11-dev untuk gohook/robotgo
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev libx11-dev libx11-xcb-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev libx11-dev libx11-xcb-dev libxkbcommon-x11-dev
           
           
       - name: Build Wails App
