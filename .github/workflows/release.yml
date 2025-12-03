@@ -60,10 +60,12 @@ jobs:
 
   # Job baru untuk menangani rilis
   release:
-    needs: build # Pastikan job build selesai dulu
+    needs: build
     runs-on: ubuntu-latest
-    # Hanya jalankan job ini jika eventnya adalah rilis yang dipublikasikan
     if: github.event_name == 'release' && github.event.action == 'published'
+    # Add permissions block here to be explicit
+    permissions:
+      contents: write 
 
     steps:
       - name: Download Windows Artifact
@@ -81,10 +83,10 @@ jobs:
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v1
         with:
-          # Arahkan action untuk melampirkan semua file dari folder hasil download
           files: |
             windows-build/*
             linux-build/*
+          # 👇👇👇 Add this line to allow overwriting files if they exist 👇👇👇
+          overwrite: true 
         env:
-          # GitHub automatically provides this token for release actions
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
