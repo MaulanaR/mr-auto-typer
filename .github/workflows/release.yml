@@ -17,9 +17,6 @@ jobs:
             os: macos-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
       - uses: Snider/build@v2.2
         with:
           build-name: ${{ matrix.name }}
