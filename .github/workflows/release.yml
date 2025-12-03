@@ -1,202 +1,289 @@
-name: Build & Release Wails
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-env:
-  APP_NAME: mr-auto-typer
-
-jobs:
+name: "Wails Build Action"
+description: "Creates a wails binary"
+branding:
+  icon: 'box'
+  color: 'purple'
+inputs:
   build:
-    name: Build (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            platform: windows
-            ext: .exe
-            arch: amd64
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-
-
-      - name: Cache Go build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
-
-      # Build frontend jika ada package.json
-      - name: Build frontend
-        if: hashFiles('frontend/package.json') != ''
-        working-directory: frontend
-        run: |
-          npm ci
-          npm run build 2>/dev/null || echo "No build script found, skipping frontend build"
-
-      # Build Wails application
-      - name: Build Wails
-        run: |
-          echo "Building for ${{ matrix.platform }}"
-          wails build -clean -platform ${{ matrix.platform }} -ldflags "-X main.version=${GITHUB_REF#v}"
-
-      # Package artifacts untuk Linux
-      - name: Package Linux artifact
-        if: matrix.platform == 'linux'
-        run: |
-          mkdir -p dist
-          TAG="${GITHUB_REF#v}"
-          BIN_NAME="${APP_NAME}${{ matrix.ext }}"
-          
-          if [ -f "build/bin/${BIN_NAME}" ]; then
-            cp "build/bin/${BIN_NAME}" "dist/"
-            tar -czf "dist/${APP_NAME}-${TAG}-linux-${{ matrix.arch }}.tar.gz" -C "dist" "${BIN_NAME}"
-            rm "dist/${BIN_NAME}"
-          elif [ -d "build/${APP_NAME}.app" ]; then
-            tar -czf "dist/${APP_NAME}-${TAG}-darwin-${{ matrix.arch }}.tar.gz" -C "build" "${APP_NAME}.app"
-          else
-            echo "Binary not found, listing build directory:"
-            find build -type f -name "*" || true
-            exit 1
+    description: "Platform to build for"
+    required: false
+    default: "true"
+  sign:
+    description: "Sign the build"
+    required: false
+    default: "false"
+  package:
+    description: "Uploads workflow & uploads tag builds to a release"
+    required: false
+    default: "true"
+  nsis:
+    description: "Build a Windows Installer"
+    required: false
+    default: "false"
+  build-name:
+    description: "The name of the binary file"
+    required: true
+  build-cache:
+    description: "Cache the build"
+    required: false
+    default: "true"
+  build-platform:
+    description: "Platform to build for"
+    required: false
+    default: "darwin/universal"
+  build-tags:
+    description: "Build tags to pass to Go compiler. Must be quoted. Space or comma (but not both) separated"
+    required: false
+    default: "false"
+  build-obfuscate:
+    description: "Obfuscate the build"
+    required: false
+    default: "false"
+  wails-version:
+    description: "Wails version to use"
+    required: false
+    default: "latest"
+  wails-build-webview2:
+    description: "Webview2 installer method [download,embed,browser,error]"
+    required: false
+    default: "download"
+  go-version:
+    description: "Version of Go to use"
+    required: false
+    default: "1.23"
+  node-version:
+    description: "Node js version"
+    required: false
+    default: "18.x"
+  deno-build:
+    description: "This gets run into bash, use the full command"
+    required: false
+    default: ""
+  app-working-directory:
+    description: "This gets run into bash, use the full command"
+    required: false
+    default: "."
+  deno-working-directory:
+    description: "This gets run into bash, use the full command"
+    required: false
+    default: "."
+  deno-version:
+    description: "Deno version to use"
+    required: false
+    default: "v1.20.x"
+  sign-macos-app-id:
+    description: "MacOS Application Certificate id"
+    required: false
+    default: ''
+  sign-macos-apple-password:
+    description: "MacOS Apple password"
+    required: false
+    default: ''
+  sign-macos-app-cert:
+    description: "MacOS Application Certificate"
+    required: false
+    default: ''
+  sign-macos-app-cert-password:
+    description: "MacOS Application Certificate Password"
+    required: false
+    default: ''
+  sign-macos-installer-id:
+    description: "MacOS Installer Certificate id"
+    required: false
+    default: ''
+  sign-macos-installer-cert:
+    description: "MacOS Installer Certificate"
+    required: false
+    default: ''
+  sign-macos-installer-cert-password:
+    description: "MacOS Installer Certificate Password"
+    required: false
+    default: ''
+  sign-windows-cert:
+    description: "Windows Signing Certificate"
+    required: false
+    default: ''
+  sign-windows-cert-password:
+    description: "Windows Signing Certificate Password"
+    required: false
+    default: ''
+  wails-dev-build:
+    description: "Use provided wails"
+    required: false
+    default: "false"
+runs:
+  using: "composite"
+  steps:
+    - name: Linux Discovery
+      if: runner.os == 'Linux'
+      id: linux_discovery
+      run: |
+        sudo apt-get -yq update
+        DISTRO=$(lsb_release -rs) # Get the distribution version (e.g., "22.04", "24.04")
+        if [[ "$DISTRO" == "20.04" ]]; then
+          sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.0-dev gcc-aarch64-linux-gnu
+        elif [[ "$DISTRO" == "22.04" ]]; then
+          sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.0-dev gcc-aarch64-linux-gnu
+        elif [[ "$DISTRO" == "24.04" ]]; then
+          sudo apt-get -yq install libgtk-3-0 libwebkit2gtk-4.1-dev gcc-aarch64-linux-gnu
+        else
+          echo "Unsupported Linux distribution: $DISTRO"
+          exit 1 # Fail the workflow if the distribution is not supported
+        fi
+        echo "DISTRO=$DISTRO" >> "$GITHUB_OUTPUT"
+      shell: bash
+    - name: Setup Build Options
+      id: build_options
+      shell: bash
+      env:
+        DISTRO: ${{ steps.linux_discovery.outputs.DISTRO }}
+      run: |
+        build_options=""
+        if ${{ inputs.build-obfuscate == 'true' }}; then
+          build_options+=' -obfuscated'
+        fi
+        if [[ "${{ inputs.build-tags }}" != "false" ]]; then
+          tags_string="${{ inputs.build-tags }}"
+          if [[ "$DISTRO" == '24.04' ]]; then
+            tags_string+=" webkit2_41"
           fi
-          ls -lah dist/
+          build_options+=" -tags $tags_string" 
+        elif [[ "${{ inputs.build-tags }}" == "false" && "$DISTRO" == '24.04' ]]; then 
+          build_options+=" -tags webkit2_41"
+        fi
+        if ${{ inputs.nsis == 'true' }}; then
+          build_options+=' -nsis'
+        fi
+        echo "BUILD_OPTIONS=$build_options" >> "$GITHUB_OUTPUT"
+    # Setup and configure GoLang
+    - name: Setup GoLang
+      uses: actions/setup-go@v5
+      if: inputs.wails-dev-build == 'false'
+      with:
+        check-latest: true
+        cache: ${{ inputs.build-cache }}
+        cache-dependency-path: 'go.sum'
+        go-version: ${{ inputs.go-version }}
+    - name: Install Garble
+      if: inputs.build-obfuscate == 'true'
+      run: go install mvdan.cc/garble@latest
+      shell: bash
+    - run: go version
+      shell: bash
+    # (Optional) Setup and configure Deno
+    - name: Setup Deno
+      uses: denoland/setup-deno@v2
+      if: inputs.deno-build != ''
+      with:
+        deno-version: ${{inputs.deno-version}}
+    - name: Run Deno Command
+      if: inputs.deno-build != ''
+      shell: bash
+      working-directory: ${{inputs.deno-working-directory}}
+      run: ${{inputs.deno-build}}
+    # install wails
+    - name: Install Wails
+      if: inputs.build == 'true' && inputs.wails-dev-build == 'false'
+      run: go install github.com/wailsapp/wails/v2/cmd/wails@${{inputs.wails-version}}
+      shell: bash
+    - name: Install macOS Wails deps
+      if: runner.os == 'macOS'
+      run: brew install mitchellh/gon/gon
+      shell: bash
+    # Building step
+    - name: Build App
+      if: inputs.build == 'true'
+      env:
+        BUILD_OPTIONS: ${{ steps.build_options.outputs.BUILD_OPTIONS }}
+      working-directory: ${{ inputs.app-working-directory }}
+      run: wails build --platform ${{inputs.build-platform}} -webview2 ${{inputs.wails-build-webview2}} -o ${{inputs.build-name}} $BUILD_OPTIONS
+      shell: bash
+    - name: Add macOS perms
+      if: inputs.build == 'true' && runner.os == 'macOS'
+      working-directory: ${{ inputs.app-working-directory }}
+      run: chmod +x build/bin/*/Contents/MacOS/*
+      shell: bash
+    - name: Add Linux perms
+      if: inputs.build == 'true' && runner.os  == 'Linux'
+      working-directory: ${{ inputs.app-working-directory }}
+      run: chmod +x build/bin/*
+      shell: bash
+    # Package and Sign MacOS
+    - name: Import Code-Signing Certificates for macOS
+      if: runner.os == 'macOS' && inputs.sign != 'false' && startsWith(github.ref, 'refs/tags/')
+      uses: Apple-Actions/import-codesign-certs@v1
+      with:
+        keychain-password: ${{ inputs.sign-macos-apple-password }}
+        p12-file-base64: ${{ inputs.sign-macos-app-cert }}
+        p12-password: ${{ inputs.sign-macos-app-cert-password }}
+    - name: Import Code-Signing Certificates for macOS Installer
+      if: runner.os == 'macOS' && inputs.sign != 'false' && startsWith(github.ref, 'refs/tags/')
+      uses: Apple-Actions/import-codesign-certs@v1
+      with:
+        keychain-password: ${{ inputs.sign-macos-apple-password }}
+        p12-file-base64: ${{ inputs.sign-macos-installer-cert }}
+        p12-password: ${{ inputs.sign-macos-installer-cert-password }}
+        create-keychain: false
+    - name: Sign our macOS binary
+      if: runner.os == 'macOS' && inputs.sign != 'false' && startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      working-directory: ${{ inputs.app-working-directory }}
+      env:
+        APPLE_PASSWORD: ${{ inputs.sign-macos-apple-password }}
+      run: |
+        echo "Signing Package"
+        gon -log-level=info ./build/darwin/gon-sign.json
+    - name: Build .app zip file
+      if: runner.os == 'macOS'
+      working-directory: ${{ inputs.app-working-directory }}
+      shell: bash
+      run: |
+        ditto -c -k --keepParent ${{ inputs.app-working-directory }}/build/bin/${{inputs.build-name}}.app ${{ inputs.app-working-directory }}/build/bin/${{inputs.build-name}}.app.zip
+    - name: Building Installer
+      if: runner.os == 'macOS' && inputs.sign != 'false' && inputs.sign-macos-installer-id != '' && startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      working-directory: ${{ inputs.app-working-directory }}
+      run: |
+        productbuild --sign '${{inputs.sign-macos-installer-id}}' --component ${{ inputs.app-working-directory }}/build/bin/${{inputs.build-name}}.app /Applications ${{ inputs.app-working-directory }}/build/bin/${{inputs.build-name}}.pkg
+    - name: Building Installer
+      if: runner.os == 'macOS' && inputs.sign-macos-installer-id == '' && startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      working-directory: ${{ inputs.app-working-directory }}
+      run: |
+        productbuild --component ${{ inputs.app-working-directory }}/build/bin/${{inputs.build-name}}.app /Applications ${{ inputs.app-working-directory }}/build/bin/${{inputs.build-name}}.pkg
+    - name: Notarising Installer and zip
+      if: runner.os == 'macOS' && inputs.sign != 'false' && startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      working-directory: ${{ inputs.app-working-directory }}
+      env:
+        APPLE_PASSWORD: ${{ inputs.sign-macos-apple-password }}
+      run: |
+        gon -log-level=info ${{ inputs.app-working-directory }}/build/darwin/gon-notarize.json
+    # Windows signing
+    - name: Sign Windows binaries
+      shell: powershell
+      if: runner.os == 'Windows' && inputs.sign != 'false' && inputs.sign-windows-cert != ''
+      working-directory: ${{ inputs.app-working-directory }}
+      run: |
+        echo "Creating certificate file"
+        New-Item -ItemType directory -Path certificate
+        Set-Content -Path certificate\certificate.txt -Value '${{ inputs.sign-windows-cert }}'
+        certutil -decode certificate\certificate.txt certificate\certificate.pfx
+        echo "Signing our binaries"
+        & 'C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe' sign /fd sha256 /tr http://ts.ssl.com /f certificate\certificate.pfx /p '${{ inputs.sign-windows-cert-password }}' .\build\bin\${{inputs.build-name}}.exe
+        echo "Signing Installer" & 'C:/Program Files (x86)/Windows Kits/10/bin/10.0.17763.0/x86/signtool.exe' sign /fd sha256 /tr http://ts.ssl.com /f certificate\certificate.pfx /p '${{ inputs.sign-windows-cert-password }}' .\build\bin\${{inputs.build-name}}-amd64-installer.exe
 
-      # Package artifacts untuk Windows
-      - name: Package Windows artifact
-        if: matrix.platform == 'windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-          $TAG = "${env:GITHUB_REF_NAME}" -replace "v", ""
-          $BIN_NAME = "${env:APP_NAME}${{ matrix.ext }}"
-          $exePath = "build/bin/${BIN_NAME}"
-          
-          if (Test-Path $exePath) {
-            Compress-Archive -Path $exePath -DestinationPath "dist/${env:APP_NAME}-${TAG}-windows-${{ matrix.arch }}.zip"
-          } else {
-            Write-Host "Binary not found at $exePath"
-            Get-ChildItem -Path build/bin -Recurse -Force | Out-String
-            exit 1
-          }
-          Get-ChildItem dist
-
-      # Package artifacts untuk macOS
-      - name: Package macOS artifact
-        if: matrix.platform == 'darwin'
-        run: |
-          mkdir -p dist
-          TAG="${GITHUB_REF#v}"
-          
-          if [ -d "build/${APP_NAME}.app" ]; then
-            # Create DMG for macOS
-            brew install create-dmg || true
-            if command -v create-dmg &> /dev/null; then
-              create-dmg "build/${APP_NAME}.app" "dist/${APP_NAME}-${TAG}-darwin-${{ matrix.arch }}.dmg" || \
-                tar -czf "dist/${APP_NAME}-${TAG}-darwin-${{ matrix.arch }}.tar.gz" -C "build" "${APP_NAME}.app"
-            else
-              tar -czf "dist/${APP_NAME}-${TAG}-darwin-${{ matrix.arch }}.tar.gz" -C "build" "${APP_NAME}.app"
-            fi
-          else
-            echo "macOS app bundle not found"
-            find build -type f -name "*" || true
-            exit 1
-          fi
-          ls -lah dist/
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.platform }}-${{ matrix.arch }}-artifacts
-          path: dist/*
-          retention-days: 30
-
-  release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Download all build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: release_dist
-          merge-multiple: true
-
-      - name: List files
-        run: |
-          echo "Release files:"
-          find release_dist -type f -name "*" | sort
-
-      - name: Create Release Notes
-        id: release_notes
-        run: |
-          TAG="${GITHUB_REF_NAME}"
-          echo "## 🚀 Release ${TAG}" > release_notes.md
-          echo "" >> release_notes.md
-          echo "### 📦 Downloads" >> release_notes.md
-          echo "" >> release_notes.md
-          
-          # Add download links for each platform
-          for file in release_dist/*; do
-            if [ -f "$file" ]; then
-              filename=$(basename "$file")
-              if [[ $filename == *"linux"* ]]; then
-                echo "- **Linux**: \`${filename}\`" >> release_notes.md
-              elif [[ $filename == *"windows"* ]]; then
-                echo "- **Windows**: \`${filename}\`" >> release_notes.md
-              elif [[ $filename == *"darwin"* ]]; then
-                echo "- **macOS**: \`${filename}\`" >> release_notes.md
-              fi
-            fi
-          done
-          
-          echo "" >> release_notes.md
-          echo "### 🔧 Installation" >> release_notes.md
-          echo "" >> release_notes.md
-          echo "- **Windows**: Extract the ZIP file and run `.exe`" >> release_notes.md
-          echo "- **Linux**: Extract the TAR.GZ file and run the binary" >> release_notes.md
-          echo "- **macOS**: Open the DMG file and drag to Applications, or extract TAR.GZ" >> release_notes.md
-          
-          cat release_notes.md
-          
-          # Set output for GitHub Release
-          {
-            echo 'notes<<EOF'
-            cat release_notes.md
-            echo EOF
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Create/Update Release
-        uses: softprops/action-gh-release@v2
-        with:
-          body: ${{ steps.release_notes.outputs.notes }}
-          files: |
-            release_dist/*
-          draft: false
-          prerelease: false
-          generate_release_notes: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Upload build assets
+    - uses: actions/upload-artifact@v4
+      if: inputs.package == 'true'
+      with:
+        name: Wails Build ${{runner.os}} ${{inputs.build-name}}
+        path: |
+          */bin/
+          *\bin\*
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: inputs.package == 'true' && startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          */bin/*
