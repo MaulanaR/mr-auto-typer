@@ -1,9 +1,5 @@
 name: Wails Build Windows & Linux
-
-on:
-  push:
-    tags:
-      - '*' # This workflow runs whenever a new git tag is pushed
+on: [push, pull_request]
 
 jobs:
   build:
