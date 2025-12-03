@@ -16,9 +16,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
+      - name: Install Wails dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -55,8 +62,11 @@ jobs:
         run: go test -v ./...
 
       - name: Build Wails (Test Build)
-        run: |
-          wails build -clean -skipfrontend
+        uses: dAppServer/wails-build-action@v2.2
+        with:
+          build-platform: ${{ matrix.os }}/amd64
+          go-version: '1.23'
+          skip-frontend: true
 
   lint:
     name: Lint
