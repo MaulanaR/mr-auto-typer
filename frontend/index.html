@@ -1,326 +1,613 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no" />
-    <title>Mr Auto Typer (MrLabs)</title>
-    <style>
-      :root {
-        /* Dark mode (default) */
-        --bg-primary: #0b1020;
-        --bg-secondary: #11162a;
-        --bg-tertiary: #0e1530;
-        --border-color: #1f2746;
-        --border-input: #24305c;
-        --text-primary: #e6e9f2;
-        --text-secondary: #aab4d4;
-        --text-tertiary: #9aa7cc;
-        --text-accent: #9bd1ff;
-        --accent-bg: #1f2746;
-        --accent-border: #2a3563;
-        --accent-text: #c9d1ff;
-        --button-primary: #5568ff;
-        --button-primary-hover: #4a5ce6;
-        --button-secondary: #263468;
-        --button-secondary-hover: #2a3d7a;
-        --shadow: 0 4px 24px rgba(0,0,0,.25);
-        --focus-ring: rgba(85,104,255,0.2);
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no" />
+  <title>Mr Auto Typer (MrLabs)</title>
+  <style>
+    :root {
+      /* Dark mode (default) */
+      --bg-primary: #0b1020;
+      --bg-secondary: #11162a;
+      --bg-tertiary: #0e1530;
+      --border-color: #1f2746;
+      --border-input: #24305c;
+      --text-primary: #e6e9f2;
+      --text-secondary: #aab4d4;
+      --text-tertiary: #9aa7cc;
+      --text-accent: #9bd1ff;
+      --accent-bg: #1f2746;
+      --accent-border: #2a3563;
+      --accent-text: #c9d1ff;
+      --button-primary: #5568ff;
+      --button-primary-hover: #4a5ce6;
+      --button-secondary: #263468;
+      --button-secondary-hover: #2a3d7a;
+      --shadow: 0 4px 24px rgba(0, 0, 0, .25);
+      --focus-ring: rgba(85, 104, 255, 0.2);
+    }
+
+    [data-theme="light"] {
+      /* Light mode */
+      --bg-primary: #f8f9fa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f3f4;
+      --border-color: #dee2e6;
+      --border-input: #ced4da;
+      --text-primary: #212529;
+      --text-secondary: #6c757d;
+      --text-tertiary: #868e96;
+      --text-accent: #0066cc;
+      --accent-bg: #e9ecef;
+      --accent-border: #ced4da;
+      --accent-text: #495057;
+      --button-primary: #5568ff;
+      --button-primary-hover: #4a5ce6;
+      --button-secondary: #6c757d;
+      --button-secondary-hover: #5a6268;
+      --shadow: 0 4px 24px rgba(0, 0, 0, .1);
+      --focus-ring: rgba(85, 104, 255, 0.3);
+    }
+
+    body {
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      margin: 0;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background-color 0.3s ease, color 0.3s ease
+    }
+
+    .wrap {
+      max-width: 920px;
+      margin: 24px auto;
+      padding: 20px
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease
+    }
+
+    textarea,
+    input {
+      width: 100%;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-input);
+      color: var(--text-primary);
+      border-radius: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: block;
+      margin-bottom: 4px
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px
+    }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px
+    }
+
+    button {
+      background: var(--button-primary);
+      border: 0;
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      font-weight: 500
+    }
+
+    button:hover {
+      background: var(--button-primary-hover);
+      transform: translateY(-1px)
+    }
+
+    button:active {
+      transform: translateY(0)
+    }
+
+    button.secondary {
+      background: var(--button-secondary)
+    }
+
+    button.secondary:hover {
+      background: var(--button-secondary-hover)
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 12px;
+      flex-wrap: wrap
+    }
+
+    .status {
+      margin-top: 8px;
+      color: var(--text-accent);
+      font-weight: 500;
+      min-height: 20px
+    }
+
+    .hint {
+      margin-top: 6px;
+      color: var(--text-tertiary);
+      font-size: 12px;
+      line-height: 1.4
+    }
+
+    .pill {
+      display: inline-block;
+      background: var(--accent-bg);
+      border: 1px solid var(--accent-border);
+      color: var(--accent-text);
+      padding: 4px 8px;
+      border-radius: 999px;
+      margin-right: 6px;
+      font-size: 11px
+    }
+
+    textarea:focus,
+    input:focus {
+      outline: none;
+      border-color: var(--button-primary);
+      box-shadow: 0 0 0 2px var(--focus-ring)
+    }
+
+    /* Theme toggle button */
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: var(--button-secondary);
+      border: 0;
+      color: #fff;
+      padding: 8px;
+      border-radius: 50%;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.2s ease
+    }
+
+    .theme-toggle:hover {
+      background: var(--button-secondary-hover);
+      transform: scale(1.1)
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .wrap {
+        margin: 12px;
+        padding: 16px
       }
 
-      [data-theme="light"] {
-        /* Light mode */
-        --bg-primary: #f8f9fa;
-        --bg-secondary: #ffffff;
-        --bg-tertiary: #f1f3f4;
-        --border-color: #dee2e6;
-        --border-input: #ced4da;
-        --text-primary: #212529;
-        --text-secondary: #6c757d;
-        --text-tertiary: #868e96;
-        --text-accent: #0066cc;
-        --accent-bg: #e9ecef;
-        --accent-border: #ced4da;
-        --accent-text: #495057;
-        --button-primary: #5568ff;
-        --button-primary-hover: #4a5ce6;
-        --button-secondary: #6c757d;
-        --button-secondary-hover: #5a6268;
-        --shadow: 0 4px 24px rgba(0,0,0,.1);
-        --focus-ring: rgba(85,104,255,0.3);
+      .card {
+        padding: 12px
       }
 
-      body{font-family:Inter,Segoe UI,Arial,sans-serif;margin:0;background:var(--bg-primary);color:var(--text-primary);transition:background-color 0.3s ease,color 0.3s ease}
-      .wrap{max-width:920px;margin:24px auto;padding:20px}
-      .card{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:14px;padding:16px;box-shadow:var(--shadow);transition:background-color 0.3s ease,border-color 0.3s ease,box-shadow 0.3s ease}
-      textarea, input{width:100%;background:var(--bg-tertiary);border:1px solid var(--border-input);color:var(--text-primary);border-radius:10px;padding:10px;box-sizing:border-box;transition:background-color 0.3s ease,border-color 0.3s ease,color 0.3s ease}
-      label{font-size:12px;color:var(--text-secondary);display:block;margin-bottom:4px}
-      .row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-      .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:10px}
-      button{background:var(--button-primary);border:0;color:#fff;padding:10px 16px;border-radius:10px;cursor:pointer;white-space:nowrap;transition:all 0.2s ease;font-weight:500}
-      button:hover{background:var(--button-primary-hover);transform:translateY(-1px)}
-      button:active{transform:translateY(0)}
-      button.secondary{background:var(--button-secondary)}
-      button.secondary:hover{background:var(--button-secondary-hover)}
-      button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
-      .toolbar{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
-      .status{margin-top:8px;color:var(--text-accent);font-weight:500;min-height:20px}
-      .hint{margin-top:6px;color:var(--text-tertiary);font-size:12px;line-height:1.4}
-      .pill{display:inline-block;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent-text);padding:4px 8px;border-radius:999px;margin-right:6px;font-size:11px}
-      textarea:focus, input:focus{outline:none;border-color:var(--button-primary);box-shadow:0 0 0 2px var(--focus-ring)}
-      
-      /* Theme toggle button */
-      .theme-toggle{position:absolute;top:20px;right:20px;background:var(--button-secondary);border:0;color:#fff;padding:8px;border-radius:50%;cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.2s ease}
-      .theme-toggle:hover{background:var(--button-secondary-hover);transform:scale(1.1)}
-      
-      /* Responsive Design */
-      @media (max-width: 768px) {
-        .wrap{margin:12px;padding:16px}
-        .card{padding:12px}
-        .row{grid-template-columns:1fr;gap:8px}
-        .row2{grid-template-columns:1fr;gap:8px}
-        .toolbar{gap:6px}
-        button{padding:8px 12px;font-size:14px}
-        h2{font-size:18px}
-        .toolbar button{flex:1;min-width:0}
-        .theme-toggle{top:12px;right:12px;width:32px;height:32px;font-size:14px}
+      .row {
+        grid-template-columns: 1fr;
+        gap: 8px
       }
-      
-      @media (max-width: 480px) {
-        .wrap{margin:8px;padding:12px}
-        .card{padding:10px}
-        textarea, input{padding:8px}
-        button{padding:6px 10px;font-size:13px}
-        h2{font-size:16px}
-        .hint{font-size:11px}
-        .toolbar{flex-direction:column}
-        .toolbar button{width:100%;margin-bottom:4px}
-        .toolbar button:last-child{margin-bottom:0}
-        .theme-toggle{top:8px;right:8px;width:28px;height:28px;font-size:12px}
+
+      .row2 {
+        grid-template-columns: 1fr;
+        gap: 8px
       }
-      
-      /* Animation for status changes */
-      @keyframes statusPulse {
-        0% { opacity: 0.7; }
-        50% { opacity: 1; }
-        100% { opacity: 0.7; }
+
+      .toolbar {
+        gap: 6px
       }
-      
-      .status.updating {
-        animation: statusPulse 1s ease-in-out;
+
+      button {
+        padding: 8px 12px;
+        font-size: 14px
       }
-    </style>
-  </head>
-  <body>
-    <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
-    <div class="wrap">
-      <div class="card">
-        <h2>Mr Auto Typer <span class="pill" id="os"></span></h2>
-        <label>Text (tokens: {backspace} {delete} {enter} {tab})</label>
-        <textarea id="text" rows="6" placeholder="Contoh: Halo{backspace} dunia{enter}"></textarea>
-        <div class="row" style="margin-top:10px">
-          <div>
-             <label>Minimum delay per key (ms)</label>
-            <input id="min" type="number" value="20" />
-          </div>
-          <div>
-            <label>Maximum delay per key (ms)</label>
-            <input id="max" type="number" value="120" />
-          </div>
-          <div>
-            <label>Jitter for loop delay (± ms)</label>
-            <input id="jitter" type="number" value="0" />
-          </div>
+
+      h2 {
+        font-size: 18px
+      }
+
+      .toolbar button {
+        flex: 1;
+        min-width: 0
+      }
+
+      .theme-toggle {
+        top: 12px;
+        right: 12px;
+        width: 32px;
+        height: 32px;
+        font-size: 14px
+      }
+    }
+
+    @media (max-width: 480px) {
+      .wrap {
+        margin: 8px;
+        padding: 12px
+      }
+
+      .card {
+        padding: 10px
+      }
+
+      textarea,
+      input {
+        padding: 8px
+      }
+
+      button {
+        padding: 6px 10px;
+        font-size: 13px
+      }
+
+      h2 {
+        font-size: 16px
+      }
+
+      .hint {
+        font-size: 11px
+      }
+
+      .toolbar {
+        flex-direction: column
+      }
+
+      .toolbar button {
+        width: 100%;
+        margin-bottom: 4px
+      }
+
+      .toolbar button:last-child {
+        margin-bottom: 0
+      }
+
+      .theme-toggle {
+        top: 8px;
+        right: 8px;
+        width: 28px;
+        height: 28px;
+        font-size: 12px
+      }
+    }
+
+    /* Animation for status changes */
+    @keyframes statusPulse {
+      0% {
+        opacity: 0.7;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.7;
+      }
+    }
+
+    .status.updating {
+      animation: statusPulse 1s ease-in-out;
+    }
+
+    /* Countdown Overlay */
+    #countdownOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      flex-direction: column;
+      color: white;
+    }
+
+    .countdown-number {
+      font-size: 120px;
+      font-weight: 800;
+      text-shadow: 0 0 20px rgba(85, 104, 255, 0.8);
+      animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .countdown-text {
+      font-size: 20px;
+      margin-top: 20px;
+      color: var(--text-accent);
+    }
+
+    @keyframes scaleIn {
+      from {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+  <div id="countdownOverlay">
+    <div class="countdown-number" id="countdownNumber">3</div>
+    <div class="countdown-text">Fokuskan ke aplikasi target...</div>
+  </div>
+  <div class="wrap">
+    <div class="card">
+      <h2>Mr Auto Typer <span class="pill" id="os"></span></h2>
+      <label>Text (tokens: {backspace} {delete} {enter} {tab})</label>
+      <textarea id="text" rows="6" placeholder="Contoh: Halo{backspace} dunia{enter}"></textarea>
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>Minimum delay per key (ms)</label>
+          <input id="min" type="number" value="20" />
         </div>
-        <div class="row2">
-          <div>
-            <label>Number of loops (0 = infinite)</label>
-            <input id="loops" type="number" value="1" />
-          </div>
-          <div>
-            <label>Delay between loops (ms)</label>
-            <input id="loopDelay" type="number" value="800" />
-          </div>
+        <div>
+          <label>Maximum delay per key (ms)</label>
+          <input id="max" type="number" value="120" />
         </div>
-        <div class="toolbar">
-          <button id="start">▶ Start</button>
-          <button id="stop" class="secondary">■ Stop</button>
-          <button id="save" class="secondary">💾 Save</button>
-          <button id="load" class="secondary">📁 Load</button>
+        <div>
+          <label>Jitter for loop delay (± ms)</label>
+          <input id="jitter" type="number" value="0" />
         </div>
-        <div class="status" id="status">Idle</div>
-        <div class="hint">💡 Hint: Focus on the window target after starting. Use the hotkey <b>Ctrl+Alt+S</b> to stop.</div>
+      </div>
+      <div class="row2">
+        <div>
+          <label>Number of loops (0 = infinite)</label>
+          <input id="loops" type="number" value="1" />
+        </div>
+        <div>
+          <label>Delay between loops (ms)</label>
+          <input id="loopDelay" type="number" value="800" />
+        </div>
+      </div>
+      <div class="toolbar">
+        <button id="start">▶ Start</button>
+        <button id="stop" class="secondary">■ Stop</button>
+        <button id="save" class="secondary">💾 Save</button>
+        <button id="load" class="secondary">📁 Load</button>
+      </div>
+      <div class="status" id="status">Idle</div>
+      <div class="hint">💡 Hint: Focus on the window target after starting. Use the hotkey <b>Ctrl+Alt+S</b> to stop.
       </div>
     </div>
-    <script src="wailsjs/runtime/runtime.js"></script>
-    <script src="wailsjs/go/main/App.js"></script>
-    <script>
-      const get=(id)=>document.getElementById(id);
-      const s=(id)=>String(get(id).value||"");
-      const n=(id)=>parseInt(get(id).value||"0");
+  </div>
+  <script src="wailsjs/runtime/runtime.js"></script>
+  <script src="wailsjs/go/main/App.js"></script>
+  <script>
+    const get = (id) => document.getElementById(id);
+    const s = (id) => String(get(id).value || "");
+    const n = (id) => parseInt(get(id).value || "0");
 
-      window.runtime.EventsOn("status", (msg)=>{
-        get("status").innerText = msg;
-        get("status").classList.add('updating');
-        setTimeout(() => get("status").classList.remove('updating'), 1000);
-      });
+    window.runtime.EventsOn("status", (msg) => {
+      get("status").innerText = msg;
 
-      // Handle window resize for better responsiveness
-      function handleResize(){
-        const width = window.innerWidth;
-        const textarea = get("text");
-        if(width < 480){
-          textarea.rows = 4;
-        }else if(width < 768){
-          textarea.rows = 5;
-        }else{
-          textarea.rows = 6;
+      // Show countdown overlay if message starts with "Mulai dalam"
+      const overlay = get("countdownOverlay");
+      const cdNum = get("countdownNumber");
+      if (msg.startsWith("Mulai dalam")) {
+        const match = msg.match(/\d+/);
+        if (match) {
+          cdNum.innerText = match[0];
+          // Re-trigger animation
+          cdNum.style.animation = 'none';
+          cdNum.offsetHeight; // trigger reflow
+          cdNum.style.animation = null;
         }
+        overlay.style.display = "flex";
+      } else {
+        overlay.style.display = "none";
       }
 
-      // Auto-save functionality
-      let autoSaveTimer;
-      function setupAutoSave(){
-        const inputs = ['text', 'min', 'max', 'loops', 'loopDelay', 'jitter'];
-        inputs.forEach(id => {
-          get(id).addEventListener('input', () => {
-            clearTimeout(autoSaveTimer);
-            autoSaveTimer = setTimeout(() => {
-              localStorage.setItem('mr-auto-typer-' + id, get(id).value);
-            }, 1000);
-          });
-        });
-      }
-
-      // Load saved values from localStorage
-      function loadLocalSettings(){
-        const inputs = ['text', 'min', 'max', 'loops', 'loopDelay', 'jitter'];
-        inputs.forEach(id => {
-          const saved = localStorage.getItem('mr-auto-typer-' + id);
-          if(saved && get(id).value === get(id).defaultValue){
-            get(id).value = saved;
-          }
-        });
-      }
-
-      // Theme management
-      function initTheme() {
-        const savedTheme = localStorage.getItem('mr-auto-typer-theme') || 'dark';
-        setTheme(savedTheme);
-      }
-
-      function setTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        const themeToggle = get("themeToggle");
-        themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
-        themeToggle.title = theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode';
-        localStorage.setItem('mr-auto-typer-theme', theme);
-      }
-
-      function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        setTheme(newTheme);
-      }
-
-      async function init(){
-        const os = await window.go.main.App.OS();
-        get("os").innerText = os;
-        
-        // Setup theme
-        initTheme();
-        get("themeToggle").onclick = toggleTheme;
-        
-        // Setup responsiveness
-        window.addEventListener('resize', handleResize);
-        handleResize();
-        
-        // Setup auto-save and load local settings
-        setupAutoSave();
-        loadLocalSettings();
-      }
-
-      async function start(){
-        const preset = {
-          text: s("text"),
-          min_ms: n("min"),
-          max_ms: n("max"),
-          loops: n("loops"),
-          loop_delay_ms: n("loopDelay"),
-          loop_jitter_ms: n("jitter"),
-        };
-        await window.go.main.App.Start(preset);
-      }
-      async function stop(){ await window.go.main.App.Stop(); }
-      async function save(){
-        const preset = {
-          text: s("text"),
-          min_ms: n("min"),
-          max_ms: n("max"),
-          loops: n("loops"),
-          loop_delay_ms: n("loopDelay"),
-          loop_jitter_ms: n("jitter"),
-        };
-        const res = await window.go.main.App.SavePreset(preset);
-        get("status").innerText = "Preset saved: "+res;
-      }
-      async function load(){
-        try{
-          const p = await window.go.main.App.LoadPreset();
-          get("text").value = p.text||"";
-          get("min").value = p.min_ms||20;
-          get("max").value = p.max_ms||120;
-          get("loops").value = p.loops||1;
-          get("loopDelay").value = p.loop_delay_ms||800;
-          get("jitter").value = p.loop_jitter_ms||0;
-          get("status").innerText = "Preset loaded";
-        }catch(e){ get("status").innerText = "Load preset error"; }
-      }
-
-      get("start").onclick = start;
-      get("stop").onclick = stop;
-      get("save").onclick = save;
-      get("load").onclick = load;
-
-      // Keyboard shortcuts
-      document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.altKey && e.key === 's') {
-          e.preventDefault();
-          stop();
-        }
-        if (e.ctrlKey && e.altKey && e.key === 'Enter') {
-          e.preventDefault();
-          start();
-        }
-      });
-
-      // Button state management
-      function setButtonState(running) {
-        get("start").disabled = running;
-        get("stop").disabled = !running;
-        get("save").disabled = running;
-        get("load").disabled = running;
-      }
-
-      // Override start/stop functions to manage button states
-      const originalStart = start;
-      const originalStop = stop;
-      
-      start = async function() {
-        setButtonState(true);
-        try {
-          await originalStart();
-        } catch (error) {
-          setButtonState(false);
-          get("status").innerText = "Error: " + error.message;
-        }
-      };
-      
-      stop = async function() {
+      // Update button states based on status
+      if (msg === "Idle" || msg.startsWith("Stopped") || msg.startsWith("Error") || msg.includes("kosong") || msg.includes("Tidak ada")) {
         setButtonState(false);
-        await originalStop();
-      };
+      } else {
+        setButtonState(true);
+      }
 
-      init();
-    </script>
-  </body>
+      get("status").classList.add('updating');
+      setTimeout(() => get("status").classList.remove('updating'), 1000);
+    });
+
+    // Handle window resize for better responsiveness
+    function handleResize() {
+      const width = window.innerWidth;
+      const textarea = get("text");
+      if (width < 480) {
+        textarea.rows = 4;
+      } else if (width < 768) {
+        textarea.rows = 5;
+      } else {
+        textarea.rows = 6;
+      }
+    }
+
+    // Auto-save functionality
+    let autoSaveTimer;
+    function setupAutoSave() {
+      const inputs = ['text', 'min', 'max', 'loops', 'loopDelay', 'jitter'];
+      inputs.forEach(id => {
+        get(id).addEventListener('input', () => {
+          clearTimeout(autoSaveTimer);
+          autoSaveTimer = setTimeout(() => {
+            localStorage.setItem('mr-auto-typer-' + id, get(id).value);
+          }, 1000);
+        });
+      });
+    }
+
+    // Load saved values from localStorage
+    function loadLocalSettings() {
+      const inputs = ['text', 'min', 'max', 'loops', 'loopDelay', 'jitter'];
+      inputs.forEach(id => {
+        const saved = localStorage.getItem('mr-auto-typer-' + id);
+        if (saved && get(id).value === get(id).defaultValue) {
+          get(id).value = saved;
+        }
+      });
+    }
+
+    // Theme management
+    function initTheme() {
+      const savedTheme = localStorage.getItem('mr-auto-typer-theme') || 'dark';
+      setTheme(savedTheme);
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const themeToggle = get("themeToggle");
+      themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
+      themeToggle.title = theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode';
+      localStorage.setItem('mr-auto-typer-theme', theme);
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      setTheme(newTheme);
+    }
+
+    async function init() {
+      const os = await window.go.main.App.OS();
+      get("os").innerText = os;
+
+      // Setup theme
+      initTheme();
+      get("themeToggle").onclick = toggleTheme;
+
+      // Setup responsiveness
+      window.addEventListener('resize', handleResize);
+      handleResize();
+
+      // Setup auto-save and load local settings
+      setupAutoSave();
+      loadLocalSettings();
+    }
+
+    async function start() {
+      const preset = {
+        text: s("text"),
+        min_ms: n("min"),
+        max_ms: n("max"),
+        loops: n("loops"),
+        loop_delay_ms: n("loopDelay"),
+        loop_jitter_ms: n("jitter"),
+      };
+      await window.go.main.App.Start(preset);
+    }
+    async function stop() { await window.go.main.App.Stop(); }
+    async function save() {
+      const preset = {
+        text: s("text"),
+        min_ms: n("min"),
+        max_ms: n("max"),
+        loops: n("loops"),
+        loop_delay_ms: n("loopDelay"),
+        loop_jitter_ms: n("jitter"),
+      };
+      const res = await window.go.main.App.SavePreset(preset);
+      get("status").innerText = "Preset saved: " + res;
+    }
+    async function load() {
+      try {
+        const p = await window.go.main.App.LoadPreset();
+        get("text").value = p.text || "";
+        get("min").value = p.min_ms || 20;
+        get("max").value = p.max_ms || 120;
+        get("loops").value = p.loops || 1;
+        get("loopDelay").value = p.loop_delay_ms || 800;
+        get("jitter").value = p.loop_jitter_ms || 0;
+        get("status").innerText = "Preset loaded";
+      } catch (e) { get("status").innerText = "Load preset error"; }
+    }
+
+    get("start").onclick = start;
+    get("stop").onclick = stop;
+    get("save").onclick = save;
+    get("load").onclick = load;
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.altKey && e.key === 's') {
+        e.preventDefault();
+        stop();
+      }
+      if (e.ctrlKey && e.altKey && e.key === 'Enter') {
+        e.preventDefault();
+        start();
+      }
+    });
+
+    // Button state management
+    function setButtonState(running) {
+      get("start").disabled = running;
+      get("stop").disabled = !running;
+      get("save").disabled = running;
+      get("load").disabled = running;
+    }
+
+    // Override start/stop functions to manage button states
+    const originalStart = start;
+    const originalStop = stop;
+
+    start = async function () {
+      setButtonState(true);
+      try {
+        await originalStart();
+      } catch (error) {
+        setButtonState(false);
+        get("status").innerText = "Error: " + error.message;
+      }
+    };
+
+    stop = async function () {
+      setButtonState(false);
+      await originalStop();
+    };
+
+    init();
+  </script>
+</body>
+
 </html>

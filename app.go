@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -72,6 +73,20 @@ func (a *App) OS() string                  { return runtime.GOOS }
 // ---- Core typing ----
 func (a *App) executeTyping(p Preset) {
 	defer func() { a.running.Store(false); wruntime.EventsEmit(a.ctx, "status", "Idle") }()
+
+	// Countdown 3, 2, 1
+	for i := 3; i > 0; i-- {
+		if a.cancel.Load() {
+			return
+		}
+		wruntime.EventsEmit(a.ctx, "status", fmt.Sprintf("Mulai dalam %d... (Segera pindah ke aplikasi target)", i))
+		time.Sleep(2 * time.Second)
+	}
+
+	if a.cancel.Load() {
+		return
+	}
+
 	wruntime.EventsEmit(a.ctx, "status", "Running… Fokuskan ke window target. Ctrl+Alt+S untuk STOP")
 
 	minD := time.Duration(p.MinMS) * time.Millisecond
